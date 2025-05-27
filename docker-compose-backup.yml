@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  ollama:
+    build:
+      context: .
+      dockerfile: ollama.Dockerfile
+    deploy:
+     resources:
+       reservations:
+         devices:
+           - driver: nvidia
+             capabilities: [compute, utility]
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+    restart: unless-stopped
+
+  # Demo Oracle Database (mimics Oracle Cloud)
+  oracle-demo:
+    image: gvenzl/oracle-xe:21-slim
+    container_name: oracle-demo
+    environment:
+      - ORACLE_PASSWORD=DemoPassword123
+      - ORACLE_DATABASE=DEMODB
+    ports:
+      - "1521:1521"
+    volumes:
+      - oracle_demo_data:/opt/oracle/oradata
+      - ./oracle-demo/init:/container-entrypoint-initdb.d
+    restart: unless-stopped
+
+  librechat:
+    image: ghcr.io/danny-avila/librechat:latest
+    container_name: librechat
+    ports:
+      - "3100:3080"
+    env_file:
+      - .env
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/librechat
+    volumes:
+      - librechat_data:/app/librechat
+    restart: unless-stopped
+
+  mongo:
+    image: mongo
+    container_name: librechat-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - librechat_mongo_data:/data/db
+
+  langchain:
+    build:
+      context: ./langchain-agent
+      dockerfile: Dockerfile
+    container_name: langchain
+    ports:
+      - "8082:8082"
+    depends_on:
+      - ollama
+      - oracle-demo
+    environment:
+      - DEMO_MODE=true
+      - ORACLE_HOST=oracle-demo
+      - ORACLE_PORT=1521
+      - ORACLE_SERVICE=XE
+    env_file:
+      - .env.oracle
+    restart: unless-stopped
+
+volumes:
+  ollama:
+  shared_app:
+  librechat_data:
+  librechat_mongo_data:
+  oracle_demo_data:
