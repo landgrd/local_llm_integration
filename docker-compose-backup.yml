@@ -68,7 +68,7 @@ services:
       - DEMO_MODE=true
       - ORACLE_HOST=oracle-demo
       - ORACLE_PORT=1521
-      - ORACLE_SERVICE=XE
+      - ORACLE_SERVICE=XEPDB1
     env_file:
       - .env.oracle
     restart: unless-stopped

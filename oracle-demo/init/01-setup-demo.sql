@@ -1,11 +1,16 @@
 -- oracle-demo/init/01-setup-demo.sql
--- Demo Oracle Database Setup - Mimics Production Structure
+-- Demo Oracle Database Setup - Fixed for Oracle XE Pluggable Database
 
 -- ═══════════════════════════════════════════════════════════
--- CREATE TABLESPACE FOR DEMO DATA
+-- CONNECT TO THE PLUGGABLE DATABASE XEPDB1
+-- ═══════════════════════════════════════════════════════════
+ALTER SESSION SET CONTAINER = XEPDB1;
+
+-- ═══════════════════════════════════════════════════════════
+-- CREATE TABLESPACE FOR DEMO DATA IN PLUGGABLE DATABASE
 -- ═══════════════════════════════════════════════════════════
 CREATE TABLESPACE demo_data
-DATAFILE '/opt/oracle/oradata/XE/demo_data.dbf' 
+DATAFILE '/opt/oracle/oradata/XE/XEPDB1/demo_data.dbf' 
 SIZE 100M AUTOEXTEND ON NEXT 10M MAXSIZE 1G;
 
 -- ═══════════════════════════════════════════════════════════
@@ -49,7 +54,7 @@ GRANT CREATE SESSION TO analytics_reader;
 -- ═══════════════════════════════════════════════════════════
 
 -- Users Table (owned by users_reader)
-CONNECT users_reader/"UsersTable123"@XE;
+CONNECT users_reader/"UsersTable123"@XEPDB1;
 
 CREATE TABLE users (
     user_id NUMBER PRIMARY KEY,
@@ -67,7 +72,7 @@ INSERT INTO users VALUES (3, 'bob_wilson', 'bob@example.com', 'Bob', 'Wilson', S
 COMMIT;
 
 -- Orders Table (owned by orders_reader)
-CONNECT orders_reader/"OrdersTable123"@XE;
+CONNECT orders_reader/"OrdersTable123"@XEPDB1;
 
 CREATE TABLE orders (
     order_id NUMBER PRIMARY KEY,
@@ -85,7 +90,7 @@ INSERT INTO orders VALUES (1003, 1, 503, 3, SYSDATE-1, 299.97, 'PENDING');
 COMMIT;
 
 -- Products Table (owned by products_reader)
-CONNECT products_reader/"ProductsTable123"@XE;
+CONNECT products_reader/"ProductsTable123"@XEPDB1;
 
 CREATE TABLE products (
     product_id NUMBER PRIMARY KEY,
@@ -102,7 +107,7 @@ INSERT INTO products VALUES (503, 'Coffee Maker', 'Appliances', 99.99, 15, 'Auto
 COMMIT;
 
 -- Analytics Table (owned by analytics_reader)
-CONNECT analytics_reader/"AnalyticsTable123"@XE;
+CONNECT analytics_reader/"AnalyticsTable123"@XEPDB1;
 
 CREATE TABLE sales_analytics (
     metric_id NUMBER PRIMARY KEY,
@@ -120,7 +125,7 @@ COMMIT;
 -- ═══════════════════════════════════════════════════════════
 -- GRANT CROSS-TABLE ACCESS FOR JOINS (if needed)
 -- ═══════════════════════════════════════════════════════════
-CONNECT system/"DemoPassword123"@XE;
+CONNECT system/"DemoPassword123"@XEPDB1;
 
 -- Allow analytics user to read from other tables for reporting
 GRANT SELECT ON users_reader.users TO analytics_reader;
@@ -128,7 +133,7 @@ GRANT SELECT ON orders_reader.orders TO analytics_reader;
 GRANT SELECT ON products_reader.products TO analytics_reader;
 
 -- Create synonyms for easier access
-CONNECT analytics_reader/"AnalyticsTable123"@XE;
+CONNECT analytics_reader/"AnalyticsTable123"@XEPDB1;
 CREATE SYNONYM users FOR users_reader.users;
 CREATE SYNONYM orders FOR orders_reader.orders;
 CREATE SYNONYM products FOR products_reader.products;
