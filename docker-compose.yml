@@ -41,8 +41,12 @@ services:
       - .env
     environment:
       - MONGO_URI=mongodb://mongo:27017/librechat
+      - CONFIG_PATH=/app/librechat.yml
+      - LIBRECHAT_CONFIG_PATH=/app/librechat.yml
+      - REMOTE_CONFIG_URL=""
     volumes:
       - librechat_data:/app/librechat
+      - ./librechat/librechat.yml:/app/librechat.yml
     restart: unless-stopped
 
   mongo:
